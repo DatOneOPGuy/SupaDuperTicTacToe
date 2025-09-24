@@ -16,6 +16,13 @@ export default function App() {
   // null = any board; otherwise forced board index 0..8
   const [requiredBoard, setRequiredBoard] = useState<number | null>(null);
 
+  // Reset the entire game
+  const resetGame = useCallback(() => {
+    setBoardWinners([null, null, null, null, null, null, null, null, null]);
+    setCurrentPlayer("X");
+    setRequiredBoard(null);
+  }, []);
+
   // Compute meta-winner from board winners
   const metaWinner: Winner = useMemo(() => {
     const WINS = [
@@ -39,7 +46,13 @@ export default function App() {
       next[boardIndex] = winner;
       return next;
     });
-  }, []);
+    
+    // Handle the circular constraint case: if a board is won and the required board
+    // is the same as the board that was just won, then allow free play
+    if (winner !== null && requiredBoard === boardIndex) {
+      setRequiredBoard(null);
+    }
+  }, [requiredBoard]);
 
   // After a successful local move (already validated by disabling UI),
   // update required board and switch player.
@@ -69,16 +82,44 @@ export default function App() {
       {/* Meta Board */}
       <MetaBoard boardWinners={boardWinners} />
       {metaWinner && (
-        <div className="text-center my-4 text-xl font-bold">Meta Winner: {metaWinner}</div>
+        <div className="text-center my-4">
+          <div className="text-xl font-bold mb-4">Meta Winner: {metaWinner}</div>
+          <button 
+            onClick={resetGame}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            New Game
+          </button>
+        </div>
       )}
       {!metaWinner && (
-        <div className="text-center my-4 text-xl font-bold">Current Player: {currentPlayer}</div>
+        <div className="text-center my-4 text-xl font-bold">
+          Current Player: {currentPlayer}
+          {requiredBoard !== null && (
+            <div className="text-lg text-blue-600 mt-2">
+              Must play in board {requiredBoard + 1}
+            </div>
+          )}
+          {requiredBoard === null && (
+            <div className="text-lg text-green-600 mt-2">
+              Can play in any available board
+            </div>
+          )}
+          <div className="mt-4">
+            <button 
+              onClick={resetGame}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Reset Game
+            </button>
+          </div>
+        </div>
       )}
       
       {/* Main 3x3 TicTacToe Grid */}
       <div className="grid grid-cols-3 max-w-2xl mx-auto">
         {/* Row 1 */}
-        <div className="border-gray-800 border-r-8 border-b-8">
+        <div className={`border-gray-800 border-r-8 border-b-8 ${requiredBoard === 0 ? 'bg-blue-100' : isBoardActive(0) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(0)} 
             onWinnerChange={(winner) => handleWinnerChange(0, winner)} 
@@ -87,7 +128,7 @@ export default function App() {
             boardIndex={0}
           />
         </div>
-        <div className="border-gray-800 border-r-8 border-b-8">
+        <div className={`border-gray-800 border-r-8 border-b-8 ${requiredBoard === 1 ? 'bg-blue-100' : isBoardActive(1) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(1)} 
             onWinnerChange={(winner) => handleWinnerChange(1, winner)} 
@@ -96,7 +137,7 @@ export default function App() {
             boardIndex={1}
           />
         </div>
-        <div className="border-gray-800 border-b-8">
+        <div className={`border-gray-800 border-b-8 ${requiredBoard === 2 ? 'bg-blue-100' : isBoardActive(2) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(2)} 
             onWinnerChange={(winner) => handleWinnerChange(2, winner)} 
@@ -107,7 +148,7 @@ export default function App() {
         </div>
         
         {/* Row 2 */}
-        <div className="border-gray-800 border-r-8 border-b-8">
+        <div className={`border-gray-800 border-r-8 border-b-8 ${requiredBoard === 3 ? 'bg-blue-100' : isBoardActive(3) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(3)} 
             onWinnerChange={(winner) => handleWinnerChange(3, winner)} 
@@ -116,7 +157,7 @@ export default function App() {
             boardIndex={3}
           />
         </div>
-        <div className="border-gray-800 border-r-8 border-b-8">
+        <div className={`border-gray-800 border-r-8 border-b-8 ${requiredBoard === 4 ? 'bg-blue-100' : isBoardActive(4) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(4)} 
             onWinnerChange={(winner) => handleWinnerChange(4, winner)} 
@@ -125,7 +166,7 @@ export default function App() {
             boardIndex={4}
           />
         </div>
-        <div className="border-gray-800 border-b-8">
+        <div className={`border-gray-800 border-b-8 ${requiredBoard === 5 ? 'bg-blue-100' : isBoardActive(5) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(5)} 
             onWinnerChange={(winner) => handleWinnerChange(5, winner)} 
@@ -136,7 +177,7 @@ export default function App() {
         </div>
         
         {/* Row 3 */}
-        <div className="border-gray-800 border-r-8">
+        <div className={`border-gray-800 border-r-8 ${requiredBoard === 6 ? 'bg-blue-100' : isBoardActive(6) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(6)} 
             onWinnerChange={(winner) => handleWinnerChange(6, winner)} 
@@ -145,7 +186,7 @@ export default function App() {
             boardIndex={6}
           />
         </div>
-        <div className="border-gray-800 border-r-8">
+        <div className={`border-gray-800 border-r-8 ${requiredBoard === 7 ? 'bg-blue-100' : isBoardActive(7) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(7)} 
             onWinnerChange={(winner) => handleWinnerChange(7, winner)} 
@@ -154,7 +195,7 @@ export default function App() {
             boardIndex={7}
           />
         </div>
-        <div className="border-gray-800">
+        <div className={`border-gray-800 ${requiredBoard === 8 ? 'bg-blue-100' : isBoardActive(8) ? 'bg-green-50' : 'bg-gray-50'}`}>
           <TicTacToe 
             isActive={isBoardActive(8)} 
             onWinnerChange={(winner) => handleWinnerChange(8, winner)} 
