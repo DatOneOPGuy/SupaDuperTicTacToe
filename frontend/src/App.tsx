@@ -15,12 +15,16 @@ export default function App() {
   const [currentPlayer, setCurrentPlayer] = useState<Player>("X");
   // null = any board; otherwise forced board index 0..8
   const [requiredBoard, setRequiredBoard] = useState<number | null>(null);
+  
+  // Reset trigger to reset all individual boards
+  const [resetTrigger, setResetTrigger] = useState(0);
 
   // Reset the entire game
   const resetGame = useCallback(() => {
     setBoardWinners([null, null, null, null, null, null, null, null, null]);
     setCurrentPlayer("X");
     setRequiredBoard(null);
+    setResetTrigger(prev => prev + 1); // Increment to trigger reset in all boards
   }, []);
 
   // Compute meta-winner from board winners
@@ -126,6 +130,7 @@ export default function App() {
             onMove={(i)=>handleMove(0,i)} 
             currentPlayer={currentPlayer}
             boardIndex={0}
+            resetTrigger={resetTrigger}
           />
         </div>
         <div className={`border-gray-800 border-r-8 border-b-8 ${requiredBoard === 1 ? 'bg-blue-100' : isBoardActive(1) ? 'bg-green-50' : 'bg-gray-50'}`}>
@@ -135,6 +140,7 @@ export default function App() {
             onMove={(i)=>handleMove(1,i)} 
             currentPlayer={currentPlayer}
             boardIndex={1}
+            resetTrigger={resetTrigger}
           />
         </div>
         <div className={`border-gray-800 border-b-8 ${requiredBoard === 2 ? 'bg-blue-100' : isBoardActive(2) ? 'bg-green-50' : 'bg-gray-50'}`}>
@@ -144,6 +150,7 @@ export default function App() {
             onMove={(i)=>handleMove(2,i)} 
             currentPlayer={currentPlayer}
             boardIndex={2}
+            resetTrigger={resetTrigger}
           />
         </div>
         
@@ -155,6 +162,7 @@ export default function App() {
             onMove={(i)=>handleMove(3,i)} 
             currentPlayer={currentPlayer}
             boardIndex={3}
+            resetTrigger={resetTrigger}
           />
         </div>
         <div className={`border-gray-800 border-r-8 border-b-8 ${requiredBoard === 4 ? 'bg-blue-100' : isBoardActive(4) ? 'bg-green-50' : 'bg-gray-50'}`}>
@@ -164,6 +172,7 @@ export default function App() {
             onMove={(i)=>handleMove(4,i)} 
             currentPlayer={currentPlayer}
             boardIndex={4}
+            resetTrigger={resetTrigger}
           />
         </div>
         <div className={`border-gray-800 border-b-8 ${requiredBoard === 5 ? 'bg-blue-100' : isBoardActive(5) ? 'bg-green-50' : 'bg-gray-50'}`}>
@@ -173,6 +182,7 @@ export default function App() {
             onMove={(i)=>handleMove(5,i)} 
             currentPlayer={currentPlayer}
             boardIndex={5}
+            resetTrigger={resetTrigger}
           />
         </div>
         
@@ -184,6 +194,7 @@ export default function App() {
             onMove={(i)=>handleMove(6,i)} 
             currentPlayer={currentPlayer}
             boardIndex={6}
+            resetTrigger={resetTrigger}
           />
         </div>
         <div className={`border-gray-800 border-r-8 ${requiredBoard === 7 ? 'bg-blue-100' : isBoardActive(7) ? 'bg-green-50' : 'bg-gray-50'}`}>
@@ -193,6 +204,7 @@ export default function App() {
             onMove={(i)=>handleMove(7,i)} 
             currentPlayer={currentPlayer}
             boardIndex={7}
+            resetTrigger={resetTrigger}
           />
         </div>
         <div className={`border-gray-800 ${requiredBoard === 8 ? 'bg-blue-100' : isBoardActive(8) ? 'bg-green-50' : 'bg-gray-50'}`}>
@@ -202,6 +214,7 @@ export default function App() {
             onMove={(i)=>handleMove(8,i)} 
             currentPlayer={currentPlayer}
             boardIndex={8}
+            resetTrigger={resetTrigger}
           />
         </div>
       </div>

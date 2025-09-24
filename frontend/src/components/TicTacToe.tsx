@@ -10,6 +10,7 @@ type Props = {
   onMove?: (cellIndex: number) => void;
   currentPlayer?: Player;
   boardIndex?: number;
+  resetTrigger?: number; // When this changes, reset the game
 };
 
 // ----- Backend DTOs -----
@@ -28,7 +29,7 @@ const API_BASE =
 
 
 
-export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMove, currentPlayer = "X", boardIndex = 0 }: Props) {
+export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMove, currentPlayer = "X", boardIndex = 0, resetTrigger }: Props) {
   const [state, setState] = React.useState<GameStateDTO | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -53,6 +54,13 @@ export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMo
       canceled = true;
     };
   }, []);
+
+  // Reset game when resetTrigger changes
+  React.useEffect(() => {
+    if (resetTrigger !== undefined) {
+      reset();
+    }
+  }, [resetTrigger]);
 
   // Notify parent when result changes
   React.useEffect(() => {
