@@ -1,16 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
+import { GameContext } from "@/App";
 
 type Player = "X" | "O";
 type Cell = Player | null;
 
 type Props = {
-  onWin?: (winner: Player | "draw" | null) => void;
-  isActive?: boolean;
-  onWinnerChange?: (winner: Player | "draw" | null) => void;
-  onMove?: (cellIndex: number) => void;
-  currentPlayer?: Player;
-  boardIndex?: number;
-  resetTrigger?: number; // When this changes, reset the game
+  boardIndex: number;
+  resetTrigger: number;
 };
 
 // ----- Backend DTOs -----
@@ -29,10 +25,18 @@ const API_BASE =
 
 
 
-export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMove, currentPlayer = "X", boardIndex = 0, resetTrigger }: Props) {
+export default function TicTacToe({ boardIndex, resetTrigger }: Props) {
+  // Get context data
+  const gameContext = useContext(GameContext);
+  
+  // Local state for this specific board
   const [state, setState] = React.useState<GameStateDTO | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Extract what we need from context
+  const currentPlayer = gameContext?.currentPlayer || "X";
+  const isActive = gameContext?.actions?.isBoardActive(boardIndex) || false;
 
   // Create a new game on mount
   React.useEffect(() => {
@@ -62,22 +66,19 @@ export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMo
     }
   }, [resetTrigger]);
 
-  // Notify parent when result changes
+  // Notify context when result changes
   React.useEffect(() => {
-    if (!state) return;
+    if (!state || !gameContext) return;
     
     let currentWinner: Player | "draw" | null = null;
     if (state.winner) currentWinner = state.winner;
     else if (state.is_draw) currentWinner = "draw";
     
-    if (onWin && currentWinner) {
-      onWin(currentWinner);
+    // Update context with winner
+    if (gameContext.actions?.setBoardWinner) {
+      gameContext.actions.setBoardWinner(boardIndex, currentWinner);
     }
-    
-    if (onWinnerChange) {
-      onWinnerChange(currentWinner);
-    }
-  }, [state?.winner, state?.is_draw]);
+  }, [state?.winner, state?.is_draw, boardIndex, gameContext]);
 
   async function createGame(): Promise<GameStateDTO> {
     const r = await fetch(`${API_BASE}/tictactoe/new`, {
@@ -104,7 +105,14 @@ export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMo
   }
 
   async function handleClick(i: number) {
-    if (!state || loading || !isActive) return;
+    if (!state || loading || !gameContext) return;
+    
+    // Strict check: only allow moves on active boards
+    if (!isActive) {
+      console.log(`Board ${boardIndex} is not active, ignoring click`);
+      return;
+    }
+    
     // Light client-side guard to avoid noisy 400s:
     if (state.winner || state.is_draw || state.board[i] !== null) return;
 
@@ -113,8 +121,10 @@ export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMo
     try {
       const next = await playMove(i);
       setState(next);
-      // Notify parent/meta-game about the move so it can enforce board constraints
-      if (onMove) onMove(i);
+      // Notify context about the move
+      if (gameContext.actions?.handleMove) {
+        gameContext.actions.handleMove(boardIndex, i);
+      }
     } catch (e: any) {
       setError(e?.message ?? "Move failed");
     } finally {
@@ -158,12 +168,15 @@ export default function TicTacToe({ onWin, isActive = true, onWinnerChange, onMo
 
   return (
     <div className="w-full p-4">
-      {/* <div className="text-center mb-2 text-xl font-semibold">{status}</div> */}
       <div className="grid grid-cols-3 gap-2">
         {board.map((c, i) => (
           <button
             key={i}
-            className="aspect-square rounded-2xl border-2 border-gray-800 text-3xl font-bold flex items-center justify-center disabled:opacity-50"
+            className={`aspect-square rounded-2xl border-2 text-3xl font-bold flex items-center justify-center ${
+              !isActive 
+                ? 'border-gray-400 bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'border-gray-800 hover:bg-gray-50'
+            } disabled:opacity-50`}
             onClick={() => handleClick(i)}
             aria-label={`cell-${i}`}
             disabled={loading || c !== null || state.winner !== null || state.is_draw || !isActive}
